@@ -40,12 +40,14 @@ class QcmController {
     }
     const questionId = parsePositiveInt(req.body?.questionId, 'questionId');
     const choiceId = parsePositiveInt(req.body?.choiceId, 'choiceId');
+    const locale = parseLocale(req.body?.lang);
     const timeSpentMs = req.body?.timeSpentMs ? parsePositiveInt(req.body.timeSpentMs, 'timeSpentMs') : undefined;
 
     const result = await this.service.answer({
       userId: req.user.id,
       questionId,
       choiceId,
+      locale,
       timeSpentMs,
     });
     res.json(result);

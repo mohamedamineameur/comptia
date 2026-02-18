@@ -19,18 +19,40 @@ type PublicQuestion = {
 class QcmService {
   constructor(private readonly repo: QcmRepository) {}
 
-  private toPublicQuestion(question: Question): PublicQuestion {
+  private pickLocalized(input: { en?: string | null; fr?: string | null; locale: Locale; fallback: string }): string {
+    if (input.locale === 'fr') {
+      return input.fr ?? input.en ?? input.fallback;
+    }
+    return input.en ?? input.fr ?? input.fallback;
+  }
+
+  private toPublicQuestion(question: Question, locale: Locale): PublicQuestion {
     const choices = (question.get('choices') as QuestionChoice[]).map((choice) => ({
       id: choice.id,
-      choiceText: choice.choiceText,
+      choiceText: this.pickLocalized({
+        en: choice.choiceTextEn,
+        fr: choice.choiceTextFr,
+        locale,
+        fallback: choice.choiceText,
+      }),
     }));
 
     return {
       id: question.id,
       subObjectiveId: question.subObjectiveId,
       language: question.language,
-      questionText: question.questionText,
-      explanation: question.explanation,
+      questionText: this.pickLocalized({
+        en: question.questionTextEn,
+        fr: question.questionTextFr,
+        locale,
+        fallback: question.questionText,
+      }),
+      explanation: this.pickLocalized({
+        en: question.explanationEn,
+        fr: question.explanationFr,
+        locale,
+        fallback: question.explanation,
+      }),
       difficulty: question.difficulty,
       source: question.source,
       choices,
@@ -39,7 +61,7 @@ class QcmService {
 
   async getQuestions(subObjectiveId: number, lang: Locale): Promise<PublicQuestion[]> {
     const rows = await this.repo.getQuestions(subObjectiveId, lang);
-    return rows.map((item) => this.toPublicQuestion(item));
+    return rows.map((item) => this.toPublicQuestion(item, lang));
   }
 
   async generate(input: {
@@ -65,7 +87,7 @@ class QcmService {
 
     const existing = await this.repo.getQuestionsByDifficulty(input.subObjectiveId, input.lang, input.difficulty);
     if (existing.length >= input.count) {
-      return existing.slice(0, input.count).map((item) => this.toPublicQuestion(item));
+      return existing.slice(0, input.count).map((item) => this.toPublicQuestion(item, input.lang));
     }
 
     const context = await this.repo.getSubObjectiveContext(input.subObjectiveId, input.lang);
@@ -106,22 +128,29 @@ class QcmService {
     for (const item of generated.questions) {
       const question = await this.repo.createQuestionWithChoices({
         subObjectiveId: input.subObjectiveId,
-        language: input.lang,
-        questionText: item.questionText,
-        explanation: item.explanation,
+        language: 'bi',
+        questionTextEn: item.questionText,
+        questionTextFr: item.questionText,
+        explanationEn: item.explanation,
+        explanationFr: item.explanation,
         difficulty: input.difficulty,
-        choices: item.choices,
+        choices: item.choices.map((choice) => ({
+          textEn: choice.text,
+          textFr: choice.text,
+          isCorrect: choice.isCorrect,
+        })),
       });
       created.push(question);
     }
 
-    return [...existing, ...created].slice(0, input.count).map((item) => this.toPublicQuestion(item));
+    return [...existing, ...created].slice(0, input.count).map((item) => this.toPublicQuestion(item, input.lang));
   }
 
   async answer(input: {
     userId: number;
     questionId: number;
     choiceId: number;
+    locale: Locale;
     timeSpentMs?: number;
   }): Promise<{
     isCorrect: boolean;
@@ -164,7 +193,12 @@ class QcmService {
 
     return {
       isCorrect,
-      explanation: question.explanation,
+      explanation: this.pickLocalized({
+        en: question.explanationEn,
+        fr: question.explanationFr,
+        locale: input.locale,
+        fallback: question.explanation,
+      }),
       correctChoiceId: correct.id,
       masteryScore,
     };

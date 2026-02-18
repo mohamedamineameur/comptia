@@ -55,11 +55,20 @@ class AdminRepository {
     difficulty: number;
     choices: Array<{ text: string; isCorrect: boolean }>;
   }) {
+    const questionTextEn = input.language === 'en' ? input.questionText : input.questionText;
+    const questionTextFr = input.language === 'fr' ? input.questionText : input.questionText;
+    const explanationEn = input.language === 'en' ? input.explanation : input.explanation;
+    const explanationFr = input.language === 'fr' ? input.explanation : input.explanation;
+
     const question = await Question.create({
       subObjectiveId: input.subObjectiveId,
-      language: input.language,
-      questionText: input.questionText,
-      explanation: input.explanation,
+      language: 'bi',
+      questionText: questionTextEn,
+      explanation: explanationEn,
+      questionTextEn,
+      questionTextFr,
+      explanationEn,
+      explanationFr,
       difficulty: input.difficulty,
       source: 'manual',
     });
@@ -68,6 +77,8 @@ class AdminRepository {
       await QuestionChoice.create({
         questionId: question.id,
         choiceText: choice.text,
+        choiceTextEn: choice.text,
+        choiceTextFr: choice.text,
         isCorrect: choice.isCorrect,
       });
     }

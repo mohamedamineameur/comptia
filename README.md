@@ -54,6 +54,7 @@ npm run db:seed -w @comptia/api
 - Web: copier `apps/web/env.template` vers `apps/web/.env`
 - Pour la generation QCM via OpenAI, renseigner `OPENAI_API_KEY` et eventuellement `OPENAI_MODEL`.
 - Pour activer l'admin, ajouter un ou plusieurs emails dans `ADMIN_EMAILS` (separes par des virgules).
+- Seed catalogue: `qcm.json` est obligatoire; `qcm.fr.json` (ou `qcm_fr.json`) est optionnel pour les traductions FR.
 
 ## Endpoints disponibles (catalog)
 

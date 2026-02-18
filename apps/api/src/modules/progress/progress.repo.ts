@@ -2,11 +2,9 @@ import { Op } from 'sequelize';
 
 import {
   Domain,
-  DomainTranslation,
   Objective,
   Question,
   SubObjective,
-  SubObjectiveTranslation,
   UserAnswer,
   UserMastery,
 } from '../../db/models/index.js';
@@ -14,6 +12,13 @@ import {
 type Locale = 'fr' | 'en';
 
 class ProgressRepository {
+  private pickLocalized(input: { en?: string | null; fr?: string | null; locale: Locale; fallback: string }): string {
+    if (input.locale === 'fr') {
+      return input.fr ?? input.en ?? input.fallback;
+    }
+    return input.en ?? input.fr ?? input.fallback;
+  }
+
   async getSummary(userId: number): Promise<{
     answered: number;
     correct: number;
@@ -52,14 +57,6 @@ class ProgressRepository {
         {
           model: SubObjective,
           as: 'subObjective',
-          include: [
-            {
-              model: SubObjectiveTranslation,
-              as: 'translations',
-              where: { locale: { [Op.in]: [locale, 'en'] } },
-              required: false,
-            },
-          ],
         },
       ],
       order: [['lastActivityAt', 'DESC']],
@@ -67,14 +64,15 @@ class ProgressRepository {
 
     return entries.map((entry) => {
       const subObjective = entry.get('subObjective') as SubObjective;
-      const translations = subObjective.get('translations') as SubObjectiveTranslation[];
-      const selected =
-        translations.find((item) => item.locale === locale) ??
-        translations.find((item) => item.locale === 'en');
       return {
         subObjectiveId: subObjective.id,
         subObjectiveCode: subObjective.code,
-        title: selected?.title ?? subObjective.code,
+        title: this.pickLocalized({
+          en: subObjective.titleEn,
+          fr: subObjective.titleFr,
+          locale,
+          fallback: subObjective.code,
+        }),
         masteryScore: entry.masteryScore,
         streak: entry.streak,
         lastActivityAt: entry.lastActivityAt,
@@ -97,14 +95,6 @@ class ProgressRepository {
                 {
                   model: Domain,
                   as: 'domain',
-                  include: [
-                    {
-                      model: DomainTranslation,
-                      as: 'translations',
-                      where: { locale: { [Op.in]: [locale, 'en'] } },
-                      required: false,
-                    },
-                  ],
                 },
               ],
             },
@@ -118,12 +108,17 @@ class ProgressRepository {
       const subObjective = entry.get('subObjective') as SubObjective;
       const objective = subObjective.get('objective') as Objective;
       const domain = objective.get('domain') as Domain;
-      const translations = domain.get('translations') as DomainTranslation[];
-      const selected =
-        translations.find((item) => item.locale === locale) ??
-        translations.find((item) => item.locale === 'en');
       const key = domain.code;
-      const bucket = buckets.get(key) ?? { name: selected?.name ?? key, total: 0, count: 0 };
+      const bucket = buckets.get(key) ?? {
+        name: this.pickLocalized({
+          en: domain.nameEn,
+          fr: domain.nameFr,
+          locale,
+          fallback: key,
+        }),
+        total: 0,
+        count: 0,
+      };
       bucket.total += entry.masteryScore;
       bucket.count += 1;
       buckets.set(key, bucket);
@@ -186,14 +181,6 @@ class ProgressRepository {
         {
           model: SubObjective,
           as: 'subObjective',
-          include: [
-            {
-              model: SubObjectiveTranslation,
-              as: 'translations',
-              where: { locale: { [Op.in]: [locale, 'en'] } },
-              required: false,
-            },
-          ],
         },
       ],
       order: [['masteryScore', 'ASC']],
@@ -202,14 +189,15 @@ class ProgressRepository {
 
     return entries.map((entry) => {
       const subObjective = entry.get('subObjective') as SubObjective;
-      const translations = subObjective.get('translations') as SubObjectiveTranslation[];
-      const selected =
-        translations.find((item) => item.locale === locale) ??
-        translations.find((item) => item.locale === 'en');
       return {
         subObjectiveId: subObjective.id,
         subObjectiveCode: subObjective.code,
-        title: selected?.title ?? subObjective.code,
+        title: this.pickLocalized({
+          en: subObjective.titleEn,
+          fr: subObjective.titleFr,
+          locale,
+          fallback: subObjective.code,
+        }),
         masteryScore: entry.masteryScore,
       };
     });
@@ -248,14 +236,6 @@ class ProgressRepository {
         {
           model: SubObjective,
           as: 'subObjective',
-          include: [
-            {
-              model: SubObjectiveTranslation,
-              as: 'translations',
-              where: { locale: { [Op.in]: [locale, 'en'] } },
-              required: false,
-            },
-          ],
         },
       ],
       order: [['id', 'ASC']],
@@ -266,15 +246,16 @@ class ProgressRepository {
     }
 
     const subObjective = unseenQuestion.get('subObjective') as SubObjective;
-    const translations = subObjective.get('translations') as SubObjectiveTranslation[];
-    const selected =
-      translations.find((item) => item.locale === locale) ??
-      translations.find((item) => item.locale === 'en');
 
     return {
       subObjectiveId: subObjective.id,
       subObjectiveCode: subObjective.code,
-      title: selected?.title ?? subObjective.code,
+      title: this.pickLocalized({
+        en: subObjective.titleEn,
+        fr: subObjective.titleFr,
+        locale,
+        fallback: subObjective.code,
+      }),
       rationale:
         locale === 'fr'
           ? 'Nouveau sous-objectif non pratique, bon candidat pour progresser.'

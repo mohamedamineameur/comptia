@@ -27,6 +27,8 @@ class Domain extends Model<InferAttributes<Domain>, InferCreationAttributes<Doma
   declare id: CreationOptional<number>;
   declare examId: number;
   declare code: string;
+  declare nameEn: CreationOptional<string | null>;
+  declare nameFr: CreationOptional<string | null>;
 }
 
 Domain.init(
@@ -34,6 +36,8 @@ Domain.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     examId: { type: DataTypes.INTEGER, allowNull: false },
     code: { type: DataTypes.STRING(32), allowNull: false, unique: true },
+    nameEn: { type: DataTypes.STRING(255), allowNull: true },
+    nameFr: { type: DataTypes.STRING(255), allowNull: true },
   },
   { sequelize, tableName: 'domains', underscored: true },
 );
@@ -62,6 +66,8 @@ class Objective extends Model<InferAttributes<Objective>, InferCreationAttribute
   declare id: CreationOptional<number>;
   declare domainId: number;
   declare code: string;
+  declare titleEn: CreationOptional<string | null>;
+  declare titleFr: CreationOptional<string | null>;
 }
 
 Objective.init(
@@ -69,6 +75,8 @@ Objective.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     domainId: { type: DataTypes.INTEGER, allowNull: false },
     code: { type: DataTypes.STRING(32), allowNull: false, unique: true },
+    titleEn: { type: DataTypes.STRING(255), allowNull: true },
+    titleFr: { type: DataTypes.STRING(255), allowNull: true },
   },
   { sequelize, tableName: 'objectives', underscored: true },
 );
@@ -100,6 +108,8 @@ class SubObjective extends Model<
   declare id: CreationOptional<number>;
   declare objectiveId: number;
   declare code: string;
+  declare titleEn: CreationOptional<string | null>;
+  declare titleFr: CreationOptional<string | null>;
 }
 
 SubObjective.init(
@@ -107,6 +117,8 @@ SubObjective.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     objectiveId: { type: DataTypes.INTEGER, allowNull: false },
     code: { type: DataTypes.STRING(32), allowNull: false, unique: true },
+    titleEn: { type: DataTypes.STRING(255), allowNull: true },
+    titleFr: { type: DataTypes.STRING(255), allowNull: true },
   },
   { sequelize, tableName: 'sub_objectives', underscored: true },
 );
@@ -135,6 +147,8 @@ class Topic extends Model<InferAttributes<Topic>, InferCreationAttributes<Topic>
   declare id: CreationOptional<number>;
   declare subObjectiveId: number;
   declare code: string;
+  declare nameEn: CreationOptional<string | null>;
+  declare nameFr: CreationOptional<string | null>;
 }
 
 Topic.init(
@@ -142,6 +156,8 @@ Topic.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     subObjectiveId: { type: DataTypes.INTEGER, allowNull: false },
     code: { type: DataTypes.STRING(32), allowNull: false, unique: true },
+    nameEn: { type: DataTypes.STRING(255), allowNull: true },
+    nameFr: { type: DataTypes.STRING(255), allowNull: true },
   },
   { sequelize, tableName: 'topics', underscored: true },
 );

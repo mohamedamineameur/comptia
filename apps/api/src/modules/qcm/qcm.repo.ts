@@ -5,9 +5,7 @@ import {
   Question,
   QuestionChoice,
   SubObjective,
-  SubObjectiveTranslation,
   Topic,
-  TopicTranslation,
   UserAnswer,
   UserMastery,
 } from '../../db/models/index.js';
@@ -16,6 +14,13 @@ import { sequelize } from '../../db/sequelize.js';
 type Locale = 'fr' | 'en';
 
 class QcmRepository {
+  private pickLocalized(input: { en?: string | null; fr?: string | null; locale: Locale; fallback: string }): string {
+    if (input.locale === 'fr') {
+      return input.fr ?? input.en ?? input.fallback;
+    }
+    return input.en ?? input.fr ?? input.fallback;
+  }
+
   findSubObjective(subObjectiveId: number): Promise<SubObjective | null> {
     return SubObjective.findByPk(subObjectiveId);
   }
@@ -24,41 +29,39 @@ class QcmRepository {
     title: string;
     topics: string[];
   }> {
-    const translation = await SubObjectiveTranslation.findOne({
-      where: {
-        subObjectiveId,
-        locale: { [Op.in]: [locale, 'en'] },
-      },
-      order: [['locale', 'ASC']],
-    });
+    const subObjective = await SubObjective.findByPk(subObjectiveId);
 
     const topicRows = await Topic.findAll({
       where: { subObjectiveId },
-      include: [
-        {
-          model: TopicTranslation,
-          as: 'translations',
-          where: { locale: { [Op.in]: [locale, 'en'] } },
-          required: false,
-        },
-      ],
       order: [['code', 'ASC']],
     });
 
     const topics = topicRows.map((topic) => {
-      const translations = topic.get('translations') as TopicTranslation[];
-      const selected =
-        translations.find((entry) => entry.locale === locale) ??
-        translations.find((entry) => entry.locale === 'en');
-      return selected?.name ?? topic.code;
+      return this.pickLocalized({
+        en: topic.nameEn,
+        fr: topic.nameFr,
+        locale,
+        fallback: topic.code,
+      });
     });
 
-    return { title: translation?.title ?? `Sub-objective ${subObjectiveId}`, topics };
+    const fallbackTitle = `Sub-objective ${subObjectiveId}`;
+    const title = this.pickLocalized({
+      en: subObjective?.titleEn ?? null,
+      fr: subObjective?.titleFr ?? null,
+      locale,
+      fallback: fallbackTitle,
+    });
+
+    return { title, topics };
   }
 
   async getQuestions(subObjectiveId: number, lang: Locale): Promise<Question[]> {
     return Question.findAll({
-      where: { subObjectiveId, language: lang },
+      where: {
+        subObjectiveId,
+        [Op.or]: [{ language: lang }, { language: 'bi' }],
+      },
       include: [{ model: QuestionChoice, as: 'choices' }],
       order: [['id', 'DESC']],
     });
@@ -66,7 +69,11 @@ class QcmRepository {
 
   async getQuestionsByDifficulty(subObjectiveId: number, lang: Locale, difficulty: number): Promise<Question[]> {
     return Question.findAll({
-      where: { subObjectiveId, language: lang, difficulty },
+      where: {
+        subObjectiveId,
+        difficulty,
+        [Op.or]: [{ language: lang }, { language: 'bi' }],
+      },
       include: [{ model: QuestionChoice, as: 'choices' }],
       order: [['id', 'DESC']],
     });
@@ -98,17 +105,23 @@ class QcmRepository {
 
   async createQuestionWithChoices(input: {
     subObjectiveId: number;
-    language: Locale;
-    questionText: string;
-    explanation: string;
+    language: Locale | 'bi';
+    questionTextEn: string;
+    questionTextFr: string;
+    explanationEn: string;
+    explanationFr: string;
     difficulty: number;
-    choices: Array<{ text: string; isCorrect: boolean }>;
+    choices: Array<{ textEn: string; textFr: string; isCorrect: boolean }>;
   }): Promise<Question> {
     const question = await Question.create({
       subObjectiveId: input.subObjectiveId,
       language: input.language,
-      questionText: input.questionText,
-      explanation: input.explanation,
+      questionText: input.questionTextEn,
+      explanation: input.explanationEn,
+      questionTextEn: input.questionTextEn,
+      questionTextFr: input.questionTextFr,
+      explanationEn: input.explanationEn,
+      explanationFr: input.explanationFr,
       difficulty: input.difficulty,
       source: 'generated',
     });
@@ -116,7 +129,9 @@ class QcmRepository {
     for (const choice of input.choices) {
       await QuestionChoice.create({
         questionId: question.id,
-        choiceText: choice.text,
+        choiceText: choice.textEn,
+        choiceTextEn: choice.textEn,
+        choiceTextFr: choice.textFr,
         isCorrect: choice.isCorrect,
       });
     }

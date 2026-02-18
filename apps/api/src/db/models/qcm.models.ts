@@ -16,6 +16,10 @@ class Question extends Model<InferAttributes<Question>, InferCreationAttributes<
   declare language: string;
   declare questionText: string;
   declare explanation: string;
+  declare questionTextEn: CreationOptional<string | null>;
+  declare questionTextFr: CreationOptional<string | null>;
+  declare explanationEn: CreationOptional<string | null>;
+  declare explanationFr: CreationOptional<string | null>;
   declare difficulty: number;
   declare source: string;
 }
@@ -27,6 +31,10 @@ Question.init(
     language: { type: DataTypes.STRING(8), allowNull: false },
     questionText: { type: DataTypes.TEXT, allowNull: false },
     explanation: { type: DataTypes.TEXT, allowNull: false },
+    questionTextEn: { type: DataTypes.TEXT, allowNull: true },
+    questionTextFr: { type: DataTypes.TEXT, allowNull: true },
+    explanationEn: { type: DataTypes.TEXT, allowNull: true },
+    explanationFr: { type: DataTypes.TEXT, allowNull: true },
     difficulty: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 2 },
     source: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'generated' },
   },
@@ -37,6 +45,8 @@ class QuestionChoice extends Model<InferAttributes<QuestionChoice>, InferCreatio
   declare id: CreationOptional<number>;
   declare questionId: number;
   declare choiceText: string;
+  declare choiceTextEn: CreationOptional<string | null>;
+  declare choiceTextFr: CreationOptional<string | null>;
   declare isCorrect: boolean;
 }
 
@@ -45,6 +55,8 @@ QuestionChoice.init(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     questionId: { type: DataTypes.INTEGER, allowNull: false },
     choiceText: { type: DataTypes.TEXT, allowNull: false },
+    choiceTextEn: { type: DataTypes.TEXT, allowNull: true },
+    choiceTextFr: { type: DataTypes.TEXT, allowNull: true },
     isCorrect: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { sequelize, tableName: 'question_choices', underscored: true },
