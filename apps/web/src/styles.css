@@ -1,0 +1,110 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.4;
+  color: #121417;
+  background-color: #f6f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.header h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.75rem;
+}
+
+.header p {
+  margin: 0 0 1rem;
+  color: #4a5565;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card h2 {
+  margin: 0 0 0.5rem;
+}
+
+.card p {
+  margin: 0;
+  color: #3b4656;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  border: 1px solid #d4dae5;
+  background: #ffffff;
+  color: #1d2736;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+.btn.active {
+  background: #1f5eff;
+  border-color: #1f5eff;
+  color: #ffffff;
+}
+
+.catalog-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.catalog-grid label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.catalog-grid select {
+  width: 100%;
+  border: 1px solid #d4dae5;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.6rem;
+  color: #1d2736;
+}
+
+.topics {
+  margin-top: 1rem;
+}
+
+.topics h3 {
+  margin: 0 0 0.5rem;
+}
+
+.topics ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.status {
+  margin: 0.5rem 0;
+  color: #495469;
+}
+
+.status.error {
+  color: #b42318;
+}

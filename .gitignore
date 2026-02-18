@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.npm-cache
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+.env
+.env.*
+!.env.example
+coverage
+.DS_Store
+*.log
+apps/api/.sequelize-*
