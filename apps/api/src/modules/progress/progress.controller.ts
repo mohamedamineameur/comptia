@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 
+import { AppError } from '../../common/errors/app-error.js';
 import { parseLocale } from '../qcm/qcm.validators.js';
 import { ProgressService } from './progress.service.js';
 
@@ -8,8 +9,7 @@ class ProgressController {
 
   summary = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const data = await this.service.getSummary(req.user.id);
     res.json(data);
@@ -17,8 +17,7 @@ class ProgressController {
 
   byDomain = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const locale = parseLocale(req.query.lang);
     const data = await this.service.getByDomain(req.user.id, locale);
@@ -27,8 +26,7 @@ class ProgressController {
 
   bySubObjective = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const locale = parseLocale(req.query.lang);
     const data = await this.service.getBySubObjective(req.user.id, locale);
@@ -37,8 +35,7 @@ class ProgressController {
 
   daily = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const data = await this.service.getDailyStats(req.user.id);
     res.json(data);
@@ -46,8 +43,7 @@ class ProgressController {
 
   weakAreas = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const locale = parseLocale(req.query.lang);
     const data = await this.service.getWeakAreas(req.user.id, locale);
@@ -56,8 +52,7 @@ class ProgressController {
 
   nextBest = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const locale = parseLocale(req.query.lang);
     const data = await this.service.getNextBest(req.user.id, locale);
@@ -66,8 +61,7 @@ class ProgressController {
 
   dashboard = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const locale = parseLocale(req.query.lang);
     const data = await this.service.getDashboard(req.user.id, locale);

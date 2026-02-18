@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { AppError } from '../errors/app-error.js';
+
 type Bucket = { count: number; resetAt: number };
 
 const store = new Map<string, Bucket>();
@@ -19,7 +21,11 @@ function rateLimitPerUser(options: { windowMs: number; max: number }) {
     if (existing.count >= options.max) {
       const retryAfter = Math.ceil((existing.resetAt - now) / 1000);
       res.setHeader('Retry-After', String(retryAfter));
-      res.status(429).json({ message: 'Too many generation requests' });
+      next(
+        new AppError('TOO_MANY_GENERATION_REQUESTS', 429, {
+          retryAfterSeconds: retryAfter,
+        }),
+      );
       return;
     }
 

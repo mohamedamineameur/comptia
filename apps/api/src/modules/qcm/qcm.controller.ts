@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 
+import { AppError } from '../../common/errors/app-error.js';
 import { QcmService } from './qcm.service.js';
 import { parseCount, parseDifficulty, parseLocale, parsePositiveInt } from './qcm.validators.js';
 
@@ -15,8 +16,7 @@ class QcmController {
 
   generate = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const subObjectiveId = parsePositiveInt(req.body?.subObjectiveId, 'subObjectiveId');
     const lang = parseLocale(req.body?.lang);
@@ -36,8 +36,7 @@ class QcmController {
 
   answer = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     const questionId = parsePositiveInt(req.body?.questionId, 'questionId');
     const choiceId = parsePositiveInt(req.body?.choiceId, 'choiceId');

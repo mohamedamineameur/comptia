@@ -1,3 +1,5 @@
+import { AppError } from '../../common/errors/app-error.js';
+
 type Locale = 'fr' | 'en';
 
 function parseLocale(input: unknown): Locale {
@@ -6,7 +8,7 @@ function parseLocale(input: unknown): Locale {
 
 function parseRequiredString(input: unknown, field: string): string {
   if (typeof input !== 'string' || input.trim().length === 0) {
-    throw new Error(`Missing required query parameter: ${field}`);
+    throw new AppError('INVALID_QUERY_PARAM', 400, { field });
   }
   return input.trim();
 }

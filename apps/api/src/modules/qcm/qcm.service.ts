@@ -1,3 +1,4 @@
+import { AppError } from '../../common/errors/app-error.js';
 import { env } from '../../config/env.js';
 import type { Question, QuestionChoice } from '../../db/models/index.js';
 import { generateQuestionsWithOpenAI } from './qcm.openai.js';
@@ -54,12 +55,12 @@ class QcmService {
     end.setDate(start.getDate() + 1);
     const todayCount = await this.repo.countUserDailyGenerations(input.userId, start, end);
     if (todayCount >= env.qcm.dailyGenerationLimit) {
-      throw new Error('Daily generation quota exceeded');
+      throw new AppError('DAILY_GENERATION_QUOTA_EXCEEDED', 429);
     }
 
     const subObjective = await this.repo.findSubObjective(input.subObjectiveId);
     if (!subObjective) {
-      throw new Error('Sub-objective not found');
+      throw new AppError('SUB_OBJECTIVE_NOT_FOUND', 404);
     }
 
     const existing = await this.repo.getQuestionsByDifficulty(input.subObjectiveId, input.lang, input.difficulty);
@@ -130,14 +131,14 @@ class QcmService {
   }> {
     const question = await this.repo.findQuestionWithChoices(input.questionId);
     if (!question) {
-      throw new Error('Question not found');
+      throw new AppError('QUESTION_NOT_FOUND', 404);
     }
     const choices = question.get('choices') as QuestionChoice[];
     const selected = choices.find((choice) => choice.id === input.choiceId);
     const correct = choices.find((choice) => choice.isCorrect);
 
     if (!selected || !correct) {
-      throw new Error('Invalid choice');
+      throw new AppError('INVALID_CHOICE', 400);
     }
 
     const isCorrect = selected.isCorrect;

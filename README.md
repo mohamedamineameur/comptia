@@ -117,6 +117,13 @@ Exemple payload `POST /api/admin/qcm/manual`:
 }
 ```
 
+## Gestion des erreurs API
+
+- Toutes les erreurs API renvoient un format stable:
+  - `{ "code": "ERROR_CODE", "message": "Message localise" }`
+- Les messages sont bilingues FR/EN selon `lang` (query/body) ou `Accept-Language`.
+- Aucune stack trace n'est exposee au client.
+
 ## Prochaines phases
 
 - Phase 3: UI catalogue mobile-first plus ergonomie (cards, nav mobile, ecrans dedies)

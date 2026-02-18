@@ -1,18 +1,20 @@
+import { AppError } from '../../common/errors/app-error.js';
+
 function parseEmail(input: unknown): string {
   if (typeof input !== 'string') {
-    throw new Error('Email is required');
+    throw new AppError('EMAIL_REQUIRED', 400);
   }
   const email = input.trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new Error('Invalid email');
+    throw new AppError('INVALID_EMAIL', 400);
   }
   return email;
 }
 
 function parsePassword(input: unknown): string {
   if (typeof input !== 'string' || input.length < 8) {
-    throw new Error('Password must contain at least 8 characters');
+    throw new AppError('INVALID_PASSWORD', 400);
   }
   return input;
 }

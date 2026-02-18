@@ -1,0 +1,328 @@
+{
+    "exam": {
+      "name": "CompTIA Security+",
+      "code": "SY0-701",
+      "version": "5.0",
+      "domains": [
+        {
+          "id": "1.0",
+          "name": "General Security Concepts",
+          "weight_percent": 12,
+          "objectives": [
+            {
+              "id": "1.1",
+              "title": "Compare and contrast various types of security controls",
+              "sub_objectives": [
+                {
+                  "id": "1.1.1",
+                  "title": "Security Control Categories",
+                  "topics": [
+                    "Technical controls",
+                    "Managerial controls",
+                    "Operational controls",
+                    "Physical controls"
+                  ]
+                },
+                {
+                  "id": "1.1.2",
+                  "title": "Control Types",
+                  "topics": [
+                    "Preventive",
+                    "Deterrent",
+                    "Detective",
+                    "Corrective",
+                    "Compensating",
+                    "Directive"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1.2",
+              "title": "Summarize fundamental security concepts",
+              "sub_objectives": [
+                {
+                  "id": "1.2.1",
+                  "title": "Core Security Principles",
+                  "topics": [
+                    "Confidentiality",
+                    "Integrity",
+                    "Availability",
+                    "Non-repudiation"
+                  ]
+                },
+                {
+                  "id": "1.2.2",
+                  "title": "Authentication, Authorization, Accounting (AAA)",
+                  "topics": [
+                    "Authenticating people",
+                    "Authenticating systems",
+                    "Authorization models",
+                    "Accounting and logging"
+                  ]
+                },
+                {
+                  "id": "1.2.3",
+                  "title": "Zero Trust Architecture",
+                  "topics": [
+                    "Control plane",
+                    "Policy engine",
+                    "Policy administrator",
+                    "Policy enforcement point",
+                    "Adaptive identity",
+                    "Threat scope reduction",
+                    "Implicit trust zones",
+                    "Subject/System"
+                  ]
+                },
+                {
+                  "id": "1.2.4",
+                  "title": "Physical Security Controls",
+                  "topics": [
+                    "Bollards",
+                    "Access control vestibule",
+                    "Fencing",
+                    "Video surveillance",
+                    "Security guard",
+                    "Access badge",
+                    "Lighting",
+                    "Infrared sensors",
+                    "Pressure sensors",
+                    "Microwave sensors",
+                    "Ultrasonic sensors"
+                  ]
+                },
+                {
+                  "id": "1.2.5",
+                  "title": "Deception Technologies",
+                  "topics": [
+                    "Honeypot",
+                    "Honeynet",
+                    "Honeyfile",
+                    "Honeytoken"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1.3",
+              "title": "Explain the importance of change management",
+              "sub_objectives": [
+                {
+                  "id": "1.3.1",
+                  "title": "Business Processes",
+                  "topics": [
+                    "Approval process",
+                    "Ownership",
+                    "Stakeholders",
+                    "Impact analysis",
+                    "Test results",
+                    "Backout plan",
+                    "Maintenance window",
+                    "Standard operating procedure"
+                  ]
+                },
+                {
+                  "id": "1.3.2",
+                  "title": "Technical Implications",
+                  "topics": [
+                    "Allow lists",
+                    "Deny lists",
+                    "Restricted activities",
+                    "Downtime",
+                    "Service restart",
+                    "Application restart",
+                    "Legacy dependencies"
+                  ]
+                },
+                {
+                  "id": "1.3.3",
+                  "title": "Documentation & Versioning",
+                  "topics": [
+                    "Updating diagrams",
+                    "Updating policies",
+                    "Version control"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1.4",
+              "title": "Cryptographic Solutions",
+              "sub_objectives": [
+                {
+                  "id": "1.4.1",
+                  "title": "Public Key Infrastructure",
+                  "topics": [
+                    "Public key",
+                    "Private key",
+                    "Key escrow"
+                  ]
+                },
+                {
+                  "id": "1.4.2",
+                  "title": "Encryption Concepts",
+                  "topics": [
+                    "Full-disk encryption",
+                    "File encryption",
+                    "Database encryption",
+                    "Transport encryption",
+                    "Symmetric encryption",
+                    "Asymmetric encryption",
+                    "Key exchange",
+                    "Algorithms",
+                    "Key length"
+                  ]
+                },
+                {
+                  "id": "1.4.3",
+                  "title": "Cryptographic Tools",
+                  "topics": [
+                    "TPM",
+                    "HSM",
+                    "Key management system",
+                    "Secure enclave"
+                  ]
+                },
+                {
+                  "id": "1.4.4",
+                  "title": "Hashing & Integrity",
+                  "topics": [
+                    "Hashing",
+                    "Salting",
+                    "Digital signatures",
+                    "Key stretching"
+                  ]
+                },
+                {
+                  "id": "1.4.5",
+                  "title": "Certificates",
+                  "topics": [
+                    "Certificate authorities",
+                    "CRL",
+                    "OCSP",
+                    "Self-signed certificates",
+                    "Third-party certificates",
+                    "Root of trust",
+                    "CSR",
+                    "Wildcard certificates"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2.0",
+          "name": "Threats, Vulnerabilities, and Mitigations",
+          "weight_percent": 22,
+          "objectives": [
+            {
+              "id": "2.1",
+              "title": "Threat Actors",
+              "sub_objectives": [
+                {
+                  "id": "2.1.1",
+                  "title": "Types of Threat Actors",
+                  "topics": [
+                    "Nation-state",
+                    "Unskilled attacker",
+                    "Hacktivist",
+                    "Insider threat",
+                    "Organized crime",
+                    "Shadow IT"
+                  ]
+                },
+                {
+                  "id": "2.1.2",
+                  "title": "Motivations",
+                  "topics": [
+                    "Financial gain",
+                    "Espionage",
+                    "Data exfiltration",
+                    "Blackmail",
+                    "Revenge",
+                    "Political beliefs",
+                    "War",
+                    "Service disruption"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2.2",
+              "title": "Threat Vectors & Attack Surfaces",
+              "sub_objectives": [
+                {
+                  "id": "2.2.1",
+                  "title": "Vectors",
+                  "topics": [
+                    "Email",
+                    "SMS",
+                    "IM",
+                    "File-based",
+                    "Image-based",
+                    "Voice call",
+                    "Removable device",
+                    "Default credentials",
+                    "Open service ports",
+                    "Supply chain"
+                  ]
+                },
+                {
+                  "id": "2.2.2",
+                  "title": "Social Engineering",
+                  "topics": [
+                    "Phishing",
+                    "Vishing",
+                    "Smishing",
+                    "Pretexting",
+                    "Business email compromise",
+                    "Watering hole",
+                    "Typosquatting",
+                    "Impersonation"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2.3",
+              "title": "Vulnerabilities",
+              "sub_objectives": [
+                {
+                  "id": "2.3.1",
+                  "title": "Application",
+                  "topics": [
+                    "Buffer overflow",
+                    "Memory injection",
+                    "Race condition",
+                    "Malicious update"
+                  ]
+                },
+                {
+                  "id": "2.3.2",
+                  "title": "Web",
+                  "topics": [
+                    "SQL injection",
+                    "Cross-site scripting"
+                  ]
+                },
+                {
+                  "id": "2.3.3",
+                  "title": "Hardware & Cloud",
+                  "topics": [
+                    "Firmware",
+                    "End-of-life",
+                    "Virtual machine escape",
+                    "Cloud misconfiguration",
+                    "Zero-day"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+  

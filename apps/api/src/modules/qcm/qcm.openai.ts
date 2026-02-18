@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { AppError } from '../../common/errors/app-error.js';
 import { env } from '../../config/env.js';
 
 type Locale = 'fr' | 'en';
@@ -63,7 +64,7 @@ function buildSchema() {
 
 function readOutputText(payload: unknown): string {
   if (typeof payload !== 'object' || payload === null) {
-    throw new Error('Empty OpenAI response');
+    throw new AppError('OPENAI_EMPTY_RESPONSE', 502);
   }
 
   const record = payload as Record<string, unknown>;
@@ -88,7 +89,7 @@ function readOutputText(payload: unknown): string {
       }
     }
   }
-  throw new Error('Empty OpenAI response');
+  throw new AppError('OPENAI_EMPTY_RESPONSE', 502);
 }
 
 async function generateQuestionsWithOpenAI(input: {
@@ -99,7 +100,7 @@ async function generateQuestionsWithOpenAI(input: {
   count: number;
 }): Promise<{ questions: GeneratedPayload['questions']; costTokens: number | null }> {
   if (!env.openai.apiKey) {
-    throw new Error('OpenAI API key missing');
+    throw new AppError('OPENAI_API_KEY_MISSING', 500);
   }
 
   const systemPrompt =
@@ -136,13 +137,22 @@ async function generateQuestionsWithOpenAI(input: {
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error (${response.status})`);
+    throw new AppError('OPENAI_API_FAILED', 502, { status: response.status });
   }
 
   const payload: unknown = await response.json();
   const outputText = readOutputText(payload);
-  const parsedJson = JSON.parse(outputText);
-  const validated = generatedPayloadSchema.parse(parsedJson);
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(outputText);
+  } catch {
+    throw new AppError('OPENAI_INVALID_FORMAT', 502);
+  }
+  const validatedResult = generatedPayloadSchema.safeParse(parsedJson);
+  if (!validatedResult.success) {
+    throw new AppError('OPENAI_INVALID_FORMAT', 502);
+  }
+  const validated = validatedResult.data;
   const payloadRecord = (typeof payload === 'object' && payload !== null
     ? (payload as Record<string, unknown>)
     : null) as Record<string, unknown> | null;

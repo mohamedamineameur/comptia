@@ -1,16 +1,17 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { AppError } from '../errors/app-error.js';
 import { env } from '../../config/env.js';
 
 function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
-    res.status(401).json({ message: 'Unauthorized' });
+    next(new AppError('UNAUTHORIZED', 401));
     return;
   }
 
   const email = req.user.email.toLowerCase();
   if (!env.admin.emails.includes(email)) {
-    res.status(403).json({ message: 'Forbidden' });
+    next(new AppError('FORBIDDEN', 403));
     return;
   }
 

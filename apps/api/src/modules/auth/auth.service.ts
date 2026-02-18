@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+import { AppError } from '../../common/errors/app-error.js';
 import { env } from '../../config/env.js';
 import type { User } from '../../db/models/index.js';
 import { AuthRepository } from './auth.repo.js';
@@ -27,7 +28,7 @@ class AuthService {
   }): Promise<{ user: SafeUser; sessionId: string; expiresAt: Date }> {
     const existing = await this.repo.findUserByEmail(input.email);
     if (existing) {
-      throw new Error('Email already used');
+      throw new AppError('EMAIL_ALREADY_USED', 409);
     }
 
     const passwordHash = await bcrypt.hash(input.password, 10);
@@ -54,12 +55,12 @@ class AuthService {
   }): Promise<{ user: SafeUser; sessionId: string; expiresAt: Date }> {
     const user = await this.repo.findUserByEmail(input.email);
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new AppError('INVALID_CREDENTIALS', 401);
     }
 
     const matches = await bcrypt.compare(input.password, user.passwordHash);
     if (!matches) {
-      throw new Error('Invalid credentials');
+      throw new AppError('INVALID_CREDENTIALS', 401);
     }
 
     const sessionId = crypto.randomBytes(32).toString('hex');

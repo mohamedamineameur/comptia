@@ -1,5 +1,6 @@
 import type { CookieOptions, Request, Response } from 'express';
 
+import { AppError } from '../../common/errors/app-error.js';
 import { env } from '../../config/env.js';
 import { AuthService } from './auth.service.js';
 import { parseDisplayName, parseEmail, parsePassword } from './auth.validators.js';
@@ -51,8 +52,7 @@ class AuthController {
 
   me = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new AppError('UNAUTHORIZED', 401);
     }
     res.json({
       user: {

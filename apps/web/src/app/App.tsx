@@ -20,6 +20,32 @@ type QuizQuestion = {
 type User = { id: number; email: string; displayName: string | null };
 type AuthMode = 'login' | 'register';
 type AppView = 'study' | 'dashboard';
+type ApiErrorCode =
+  | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'TOO_MANY_REQUESTS'
+  | 'BAD_GATEWAY'
+  | 'INTERNAL_SERVER_ERROR'
+  | 'INVALID_QUERY_PARAM'
+  | 'INVALID_BODY'
+  | 'INVALID_EMAIL'
+  | 'EMAIL_REQUIRED'
+  | 'INVALID_PASSWORD'
+  | 'INVALID_CREDENTIALS'
+  | 'EMAIL_ALREADY_USED'
+  | 'DAILY_GENERATION_QUOTA_EXCEEDED'
+  | 'TOO_MANY_GENERATION_REQUESTS'
+  | 'QUESTION_NOT_FOUND'
+  | 'SUB_OBJECTIVE_NOT_FOUND'
+  | 'INVALID_CHOICE'
+  | 'OPENAI_API_KEY_MISSING'
+  | 'OPENAI_EMPTY_RESPONSE'
+  | 'OPENAI_INVALID_FORMAT'
+  | 'OPENAI_API_FAILED'
+  | 'ADMIN_INVALID_PAYLOAD';
 type DashboardSummary = {
   answered: number;
   correct: number;
@@ -57,6 +83,100 @@ type DashboardData = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+const KNOWN_API_CODES: ApiErrorCode[] = [
+  'BAD_REQUEST',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'CONFLICT',
+  'TOO_MANY_REQUESTS',
+  'BAD_GATEWAY',
+  'INTERNAL_SERVER_ERROR',
+  'INVALID_QUERY_PARAM',
+  'INVALID_BODY',
+  'INVALID_EMAIL',
+  'EMAIL_REQUIRED',
+  'INVALID_PASSWORD',
+  'INVALID_CREDENTIALS',
+  'EMAIL_ALREADY_USED',
+  'DAILY_GENERATION_QUOTA_EXCEEDED',
+  'TOO_MANY_GENERATION_REQUESTS',
+  'QUESTION_NOT_FOUND',
+  'SUB_OBJECTIVE_NOT_FOUND',
+  'INVALID_CHOICE',
+  'OPENAI_API_KEY_MISSING',
+  'OPENAI_EMPTY_RESPONSE',
+  'OPENAI_INVALID_FORMAT',
+  'OPENAI_API_FAILED',
+  'ADMIN_INVALID_PAYLOAD',
+];
+
+class ApiError extends Error {
+  readonly status: number;
+  readonly code?: ApiErrorCode;
+
+  constructor(status: number, message: string, code?: ApiErrorCode) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+function isKnownApiErrorCode(value: unknown): value is ApiErrorCode {
+  return typeof value === 'string' && KNOWN_API_CODES.includes(value as ApiErrorCode);
+}
+
+function errorMessageForCode(code: ApiErrorCode, t: Record<string, string>): string {
+  switch (code) {
+    case 'UNAUTHORIZED':
+      return t.errorUnauthorized;
+    case 'FORBIDDEN':
+      return t.errorForbidden;
+    case 'CONFLICT':
+    case 'EMAIL_ALREADY_USED':
+      return t.errorConflict;
+    case 'TOO_MANY_REQUESTS':
+    case 'DAILY_GENERATION_QUOTA_EXCEEDED':
+    case 'TOO_MANY_GENERATION_REQUESTS':
+      return t.errorRateLimited;
+    case 'BAD_GATEWAY':
+    case 'OPENAI_API_FAILED':
+    case 'OPENAI_EMPTY_RESPONSE':
+    case 'OPENAI_INVALID_FORMAT':
+    case 'OPENAI_API_KEY_MISSING':
+      return t.errorExternalService;
+    case 'NOT_FOUND':
+    case 'QUESTION_NOT_FOUND':
+    case 'SUB_OBJECTIVE_NOT_FOUND':
+      return t.errorNotFound;
+    case 'BAD_REQUEST':
+    case 'INVALID_QUERY_PARAM':
+    case 'INVALID_BODY':
+    case 'INVALID_EMAIL':
+    case 'EMAIL_REQUIRED':
+    case 'INVALID_PASSWORD':
+    case 'INVALID_CHOICE':
+    case 'ADMIN_INVALID_PAYLOAD':
+      return t.errorBadRequest;
+    case 'INVALID_CREDENTIALS':
+      return t.errorInvalidCredentials;
+    default:
+      return t.errorGeneric;
+  }
+}
+
+function getFriendlyApiErrorMessage(error: unknown, t: Record<string, string>): string {
+  if (error instanceof ApiError) {
+    if (error.code) {
+      return errorMessageForCode(error.code, t);
+    }
+    if (error.message) {
+      return error.message;
+    }
+  }
+  return t.errorGeneric;
+}
 
 function App(): ReactElement {
   const [locale, setLocale] = useState<Locale>('fr');
@@ -113,7 +233,20 @@ function App(): ReactElement {
       ...options,
     });
     if (!response.ok) {
-      throw new Error(`API error (${response.status})`);
+      let payload: unknown = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      const codeRaw =
+        payload && typeof payload === 'object' ? (payload as Record<string, unknown>).code : undefined;
+      const messageRaw =
+        payload && typeof payload === 'object' ? (payload as Record<string, unknown>).message : undefined;
+      const code = isKnownApiErrorCode(codeRaw) ? codeRaw : undefined;
+      const message = typeof messageRaw === 'string' ? messageRaw : `API error (${response.status})`;
+      throw new ApiError(response.status, message, code);
     }
     if (response.status === 204) {
       return undefined as T;
@@ -144,7 +277,7 @@ function App(): ReactElement {
         setExams(data);
         setSelectedExamCode(data[0]?.code ?? '');
       })
-      .catch(() => setError(t.apiUnavailable))
+      .catch((error: unknown) => setError(getFriendlyApiErrorMessage(error, t)))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -160,7 +293,7 @@ function App(): ReactElement {
         setDomains(data);
         setSelectedDomainCode(data[0]?.code ?? '');
       })
-      .catch(() => setError(t.apiUnavailable))
+      .catch((error: unknown) => setError(getFriendlyApiErrorMessage(error, t)))
       .finally(() => setLoading(false));
   }, [user, selectedExamCode, locale]);
 
@@ -178,7 +311,7 @@ function App(): ReactElement {
         setObjectives(data);
         setSelectedObjectiveCode(data[0]?.code ?? '');
       })
-      .catch(() => setError(t.apiUnavailable))
+      .catch((error: unknown) => setError(getFriendlyApiErrorMessage(error, t)))
       .finally(() => setLoading(false));
   }, [user, selectedDomainCode, locale]);
 
@@ -196,7 +329,7 @@ function App(): ReactElement {
         setSubObjectives(data);
         setSelectedSubObjectiveCode(data[0]?.code ?? '');
       })
-      .catch(() => setError(t.apiUnavailable))
+      .catch((error: unknown) => setError(getFriendlyApiErrorMessage(error, t)))
       .finally(() => setLoading(false));
   }, [user, selectedObjectiveCode, locale]);
 
@@ -211,7 +344,7 @@ function App(): ReactElement {
       `/api/catalog/topics?subObjectiveCode=${encodeURIComponent(selectedSubObjectiveCode)}&lang=${locale}`,
     )
       .then((data) => setTopics(data))
-      .catch(() => setError(t.apiUnavailable))
+      .catch((error: unknown) => setError(getFriendlyApiErrorMessage(error, t)))
       .finally(() => setLoading(false));
   }, [user, selectedSubObjectiveCode, locale]);
 
@@ -246,8 +379,8 @@ function App(): ReactElement {
       );
       setUser(data.user);
       setPassword('');
-    } catch {
-      setAuthError(authMode === 'register' ? t.registerFailed : t.loginFailed);
+    } catch (error: unknown) {
+      setAuthError(getFriendlyApiErrorMessage(error, t));
     }
   }
 
@@ -291,8 +424,8 @@ function App(): ReactElement {
       setQuizQuestions(questions.slice(0, 5));
       setQuizIndex(0);
       setQuizMastery(null);
-    } catch {
-      setQuizFeedback(t.quizGenerationFailed);
+    } catch (error: unknown) {
+      setQuizFeedback(getFriendlyApiErrorMessage(error, t));
     } finally {
       setLoading(false);
     }
@@ -318,8 +451,8 @@ function App(): ReactElement {
       setQuizMastery(result.masteryScore);
       const freshDashboard = await request<DashboardData>(`/api/progress/dashboard?lang=${locale}`);
       setDashboard(freshDashboard);
-    } catch {
-      setQuizFeedback(t.quizAnswerFailed);
+    } catch (error: unknown) {
+      setQuizFeedback(getFriendlyApiErrorMessage(error, t));
     }
   }
 
