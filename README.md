@@ -53,6 +53,7 @@ npm run db:seed -w @comptia/api
 - API: copier `apps/api/env.template` vers `apps/api/.env`
 - Web: copier `apps/web/env.template` vers `apps/web/.env`
 - Pour la generation QCM via OpenAI, renseigner `OPENAI_API_KEY` et eventuellement `OPENAI_MODEL`.
+- Pour activer l'admin, ajouter un ou plusieurs emails dans `ADMIN_EMAILS` (separes par des virgules).
 
 ## Endpoints disponibles (catalog)
 
@@ -89,6 +90,32 @@ npm run db:seed -w @comptia/api
 - `GET /api/progress/weak-areas?lang=fr` (auth)
 - `GET /api/progress/next-best?lang=fr` (auth)
 - `GET /api/progress/dashboard?lang=fr` (auth)
+
+## Endpoints disponibles (admin)
+
+Ces endpoints exigent un utilisateur connecte dont l'email est present dans `ADMIN_EMAILS`.
+
+- `GET /api/admin/status`
+- `POST /api/admin/seed`
+- `POST /api/admin/qcm/manual`
+
+Exemple payload `POST /api/admin/qcm/manual`:
+
+```json
+{
+  "subObjectiveId": 1,
+  "language": "fr",
+  "questionText": "Quel acteur ... ?",
+  "explanation": "La bonne reponse est ...",
+  "difficulty": 2,
+  "choices": [
+    { "text": "Option A", "isCorrect": true },
+    { "text": "Option B", "isCorrect": false },
+    { "text": "Option C", "isCorrect": false },
+    { "text": "Option D", "isCorrect": false }
+  ]
+}
+```
 
 ## Prochaines phases
 

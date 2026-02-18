@@ -35,6 +35,8 @@ const messages = {
     quizGenerationFailed: 'Generation QCM impossible.',
     quizAnswerFailed: 'Envoi de la reponse impossible.',
     dashboardTitle: 'Dashboard',
+    studyTab: 'Etude',
+    dashboardTab: 'Vue dashboard',
     dashboardUnavailable: 'Dashboard indisponible pour le moment.',
     metricAnswered: 'Questions repondues',
     metricAccuracy: 'Precision',
@@ -45,6 +47,8 @@ const messages = {
     nextBestTitle: 'Prochain meilleur sous-objectif',
     noNextBest: 'Aucune recommandation disponible.',
     dailyStatsTitle: 'Stats quotidiennes (7 jours)',
+    masteryHeatmapTitle: 'Heatmap mastery par sous-objectif',
+    noMasteryData: 'Aucune donnee de mastery disponible.',
   },
   en: {
     title: 'Comptia Learning',
@@ -82,6 +86,8 @@ const messages = {
     quizGenerationFailed: 'Quiz generation failed.',
     quizAnswerFailed: 'Answer submission failed.',
     dashboardTitle: 'Dashboard',
+    studyTab: 'Study',
+    dashboardTab: 'Dashboard view',
     dashboardUnavailable: 'Dashboard currently unavailable.',
     metricAnswered: 'Answered questions',
     metricAccuracy: 'Accuracy',
@@ -92,6 +98,8 @@ const messages = {
     nextBestTitle: 'Next best sub-objective',
     noNextBest: 'No recommendation available.',
     dailyStatsTitle: 'Daily stats (7 days)',
+    masteryHeatmapTitle: 'Mastery heatmap by sub-objective',
+    noMasteryData: 'No mastery data available.',
   },
 };
 

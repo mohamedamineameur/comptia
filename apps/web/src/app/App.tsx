@@ -19,6 +19,7 @@ type QuizQuestion = {
 };
 type User = { id: number; email: string; displayName: string | null };
 type AuthMode = 'login' | 'register';
+type AppView = 'study' | 'dashboard';
 type DashboardSummary = {
   answered: number;
   correct: number;
@@ -41,6 +42,15 @@ type DashboardNextBest = {
 } | null;
 type DashboardData = {
   summary: DashboardSummary;
+  byDomain: Array<{ domainCode: string; name: string; masteryScore: number }>;
+  bySubObjective: Array<{
+    subObjectiveId: number;
+    subObjectiveCode: string;
+    title: string;
+    masteryScore: number;
+    streak: number;
+    lastActivityAt: string;
+  }>;
   daily: DashboardDay[];
   weakAreas: DashboardWeakArea[];
   nextBest: DashboardNextBest;
@@ -51,6 +61,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 function App(): ReactElement {
   const [locale, setLocale] = useState<Locale>('fr');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [view, setView] = useState<AppView>('study');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -81,6 +92,20 @@ function App(): ReactElement {
     () => subObjectives.find((item) => item.code === selectedSubObjectiveCode) ?? null,
     [subObjectives, selectedSubObjectiveCode],
   );
+  const dailyMax = useMemo(
+    () => Math.max(1, ...(dashboard?.daily.map((day) => day.answered) ?? [1])),
+    [dashboard],
+  );
+
+  function masteryClass(value: number): string {
+    if (value >= 80) {
+      return 'heat-good';
+    }
+    if (value >= 50) {
+      return 'heat-mid';
+    }
+    return 'heat-low';
+  }
 
   async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${API_URL}${path}`, {
@@ -240,6 +265,7 @@ function App(): ReactElement {
     setQuizIndex(0);
     setQuizFeedback(null);
     setQuizMastery(null);
+    setView('study');
   }
 
   async function generateQuiz(): Promise<void> {
@@ -389,6 +415,20 @@ function App(): ReactElement {
         <div className="actions">
           <button
             type="button"
+            className={view === 'study' ? 'btn active' : 'btn'}
+            onClick={() => setView('study')}
+          >
+            {t.studyTab}
+          </button>
+          <button
+            type="button"
+            className={view === 'dashboard' ? 'btn active' : 'btn'}
+            onClick={() => setView('dashboard')}
+          >
+            {t.dashboardTab}
+          </button>
+          <button
+            type="button"
             className={locale === 'fr' ? 'btn active' : 'btn'}
             onClick={() => setLocale('fr')}
           >
@@ -406,7 +446,7 @@ function App(): ReactElement {
         {loading ? <p className="status">{t.loading}</p> : null}
         {error ? <p className="status error">{error}</p> : null}
 
-        {canShowContent ? (
+        {canShowContent && view === 'study' ? (
           <div className="catalog-grid">
             <label>
               {t.exam}
@@ -457,8 +497,8 @@ function App(): ReactElement {
           </div>
         ) : null}
 
-        {canShowContent ? (
-          <div className="dashboard-block">
+        {canShowContent && view === 'dashboard' ? (
+          <div className="dashboard-block standalone">
             <h3>{t.dashboardTitle}</h3>
             {dashboard ? (
               <>
@@ -513,13 +553,37 @@ function App(): ReactElement {
 
                 <div>
                   <h4>{t.dailyStatsTitle}</h4>
-                  <ul>
+                  <div className="daily-bars">
                     {dashboard.daily.map((day) => (
-                      <li key={day.day}>
-                        {day.day}: {day.correct}/{day.answered}
-                      </li>
+                      <div key={day.day} className="daily-bar-row">
+                        <span className="daily-label">{day.day.slice(5)}</span>
+                        <div className="daily-track">
+                          <div className="daily-fill" style={{ width: `${(day.answered / dailyMax) * 100}%` }} />
+                        </div>
+                        <span className="daily-value">
+                          {day.correct}/{day.answered}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h4>{t.masteryHeatmapTitle}</h4>
+                  {dashboard.bySubObjective.length === 0 ? (
+                    <p>{t.noMasteryData}</p>
+                  ) : (
+                    <div className="heatmap-list">
+                      {dashboard.bySubObjective.map((item) => (
+                        <div key={item.subObjectiveId} className={`heatmap-item ${masteryClass(item.masteryScore)}`}>
+                          <span>
+                            {item.subObjectiveCode} - {item.title}
+                          </span>
+                          <strong>{item.masteryScore}%</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -528,7 +592,7 @@ function App(): ReactElement {
           </div>
         ) : null}
 
-        {canShowContent ? (
+        {canShowContent && view === 'study' ? (
           <div className="topics">
             <h3>{t.topics}</h3>
             {topics.length === 0 ? (
@@ -545,7 +609,7 @@ function App(): ReactElement {
           </div>
         ) : null}
 
-        {canShowContent ? (
+        {canShowContent && view === 'study' ? (
           <div className="quiz-block">
             <h3>{t.quizTitle}</h3>
             <p>{t.quizHelp}</p>

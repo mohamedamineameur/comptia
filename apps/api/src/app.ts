@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import type { NextFunction, Request, Response } from 'express';
 
+import { adminRouter } from './modules/admin/admin.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { catalogRouter } from './modules/catalog/catalog.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
@@ -31,6 +32,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/catalog', catalogRouter);
 app.use('/api/qcm', qcmRouter);
 app.use('/api/progress', progressRouter);
+app.use('/api/admin', adminRouter);
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message = error instanceof Error ? error.message : 'Internal server error';
@@ -47,6 +49,8 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
         ? 429
       : message === 'Invalid credentials' || message === 'Unauthorized'
         ? 401
+      : message === 'Forbidden'
+        ? 403
         : message === 'Email already used'
           ? 409
           : message === 'Question not found' || message === 'Sub-objective not found'

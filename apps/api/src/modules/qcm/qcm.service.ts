@@ -4,12 +4,41 @@ import { generateQuestionsWithOpenAI } from './qcm.openai.js';
 import { QcmRepository } from './qcm.repo.js';
 
 type Locale = 'fr' | 'en';
+type PublicQuestion = {
+  id: number;
+  subObjectiveId: number;
+  language: string;
+  questionText: string;
+  explanation: string;
+  difficulty: number;
+  source: string;
+  choices: Array<{ id: number; choiceText: string }>;
+};
 
 class QcmService {
   constructor(private readonly repo: QcmRepository) {}
 
-  async getQuestions(subObjectiveId: number, lang: Locale): Promise<Question[]> {
-    return this.repo.getQuestions(subObjectiveId, lang);
+  private toPublicQuestion(question: Question): PublicQuestion {
+    const choices = (question.get('choices') as QuestionChoice[]).map((choice) => ({
+      id: choice.id,
+      choiceText: choice.choiceText,
+    }));
+
+    return {
+      id: question.id,
+      subObjectiveId: question.subObjectiveId,
+      language: question.language,
+      questionText: question.questionText,
+      explanation: question.explanation,
+      difficulty: question.difficulty,
+      source: question.source,
+      choices,
+    };
+  }
+
+  async getQuestions(subObjectiveId: number, lang: Locale): Promise<PublicQuestion[]> {
+    const rows = await this.repo.getQuestions(subObjectiveId, lang);
+    return rows.map((item) => this.toPublicQuestion(item));
   }
 
   async generate(input: {
@@ -18,7 +47,7 @@ class QcmService {
     difficulty: number;
     count: number;
     userId: number;
-  }): Promise<Question[]> {
+  }): Promise<PublicQuestion[]> {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -35,7 +64,7 @@ class QcmService {
 
     const existing = await this.repo.getQuestionsByDifficulty(input.subObjectiveId, input.lang, input.difficulty);
     if (existing.length >= input.count) {
-      return existing.slice(0, input.count);
+      return existing.slice(0, input.count).map((item) => this.toPublicQuestion(item));
     }
 
     const context = await this.repo.getSubObjectiveContext(input.subObjectiveId, input.lang);
@@ -85,7 +114,7 @@ class QcmService {
       created.push(question);
     }
 
-    return [...existing, ...created].slice(0, input.count);
+    return [...existing, ...created].slice(0, input.count).map((item) => this.toPublicQuestion(item));
   }
 
   async answer(input: {

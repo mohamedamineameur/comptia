@@ -34,6 +34,12 @@ const env = {
     apiKey: process.env.OPENAI_API_KEY ?? '',
     model: process.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
   },
+  admin: {
+    emails: (process.env.ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((item) => item.trim().toLowerCase())
+      .filter((item) => item.length > 0),
+  },
   db: {
     host: process.env.DB_HOST ?? 'localhost',
     port: Number(process.env.DB_PORT ?? 5432),
