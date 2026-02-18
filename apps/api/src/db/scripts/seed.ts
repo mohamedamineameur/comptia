@@ -10,6 +10,8 @@ import {
   SubObjectiveTranslation,
   Topic,
   TopicTranslation,
+  Question,
+  QuestionChoice,
 } from '../../db/models/index.js';
 import { sequelize } from '../../db/sequelize.js';
 
@@ -104,6 +106,36 @@ async function seedCatalog(): Promise<void> {
     where: { topicId: topic2.id, locale: 'en' },
     defaults: { topicId: topic2.id, locale: 'en', name: 'Financially motivated cybercriminals' },
   });
+
+  const [question] = await Question.findOrCreate({
+    where: {
+      subObjectiveId: subObjective.id,
+      language: 'fr',
+      difficulty: 2,
+      questionText:
+        'Quel acteur de menace est generalement associe a des campagnes de longue duree et tres ciblees ?',
+    },
+    defaults: {
+      subObjectiveId: subObjective.id,
+      language: 'fr',
+      questionText:
+        'Quel acteur de menace est generalement associe a des campagnes de longue duree et tres ciblees ?',
+      explanation:
+        'Les groupes APT sont connus pour des operations persistantes, ciblees et souvent financees a grande echelle.',
+      difficulty: 2,
+      source: 'manual',
+    },
+  });
+
+  const existingChoices = await QuestionChoice.count({ where: { questionId: question.id } });
+  if (existingChoices === 0) {
+    await QuestionChoice.bulkCreate([
+      { questionId: question.id, choiceText: 'Un groupe APT soutenu par un Etat', isCorrect: true },
+      { questionId: question.id, choiceText: 'Un utilisateur interne non forme', isCorrect: false },
+      { questionId: question.id, choiceText: 'Une panne materielle aleatoire', isCorrect: false },
+      { questionId: question.id, choiceText: 'Une erreur DNS locale isolee', isCorrect: false },
+    ]);
+  }
 }
 
 async function run(): Promise<void> {

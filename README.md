@@ -52,6 +52,7 @@ npm run db:seed -w @comptia/api
 
 - API: copier `apps/api/env.template` vers `apps/api/.env`
 - Web: copier `apps/web/env.template` vers `apps/web/.env`
+- Pour la generation QCM via OpenAI, renseigner `OPENAI_API_KEY` et eventuellement `OPENAI_MODEL`.
 
 ## Endpoints disponibles (catalog)
 
@@ -67,6 +68,27 @@ npm run db:seed -w @comptia/api
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+
+## Endpoints disponibles (QCM)
+
+- `POST /api/qcm/generate` (auth)
+- `GET /api/qcm/questions?subObjectiveId=...&lang=fr` (auth)
+- `POST /api/qcm/answer` (auth)
+
+`/api/qcm/generate` utilise l'API Responses OpenAI avec sortie JSON structuree validee cote serveur, plus:
+
+- quota journalier par utilisateur (`QCM_DAILY_GENERATION_LIMIT`)
+- rate limit sur l'endpoint (`QCM_GENERATE_RATE_WINDOW_MS`, `QCM_GENERATE_RATE_MAX`)
+
+## Endpoints disponibles (progression)
+
+- `GET /api/progress/summary` (auth)
+- `GET /api/progress/by-domain?lang=fr` (auth)
+- `GET /api/progress/by-subobjective?lang=fr` (auth)
+- `GET /api/progress/daily` (auth)
+- `GET /api/progress/weak-areas?lang=fr` (auth)
+- `GET /api/progress/next-best?lang=fr` (auth)
+- `GET /api/progress/dashboard?lang=fr` (auth)
 
 ## Prochaines phases
 

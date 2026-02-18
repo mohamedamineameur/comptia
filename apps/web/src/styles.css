@@ -141,3 +141,66 @@ body {
 .userbar p {
   margin: 0;
 }
+
+.quiz-block {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e7ebf3;
+}
+
+.quiz-card {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid #e7ebf3;
+  border-radius: 10px;
+}
+
+.quiz-step {
+  margin: 0;
+  color: #53627a;
+}
+
+.quiz-choices {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dashboard-block {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e7ebf3;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-bottom: 0.75rem;
+}
+
+.metric-card {
+  border: 1px solid #e7ebf3;
+  border-radius: 10px;
+  padding: 0.6rem;
+  background: #fbfcff;
+}
+
+.metric-card p {
+  margin: 0 0 0.2rem;
+  color: #60708b;
+  font-size: 0.9rem;
+}
+
+.dashboard-two-cols {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 760px) {
+  .dashboard-two-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}

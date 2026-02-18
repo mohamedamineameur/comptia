@@ -10,8 +10,41 @@ type Domain = CatalogItem & { name: string };
 type Objective = CatalogItem & { title: string };
 type SubObjective = CatalogItem & { title: string };
 type Topic = CatalogItem & { name: string };
+type Choice = { id: number; choiceText: string; isCorrect: boolean };
+type QuizQuestion = {
+  id: number;
+  questionText: string;
+  explanation: string;
+  choices: Choice[];
+};
 type User = { id: number; email: string; displayName: string | null };
 type AuthMode = 'login' | 'register';
+type DashboardSummary = {
+  answered: number;
+  correct: number;
+  accuracy: number;
+  averageMastery: number;
+  streak: number;
+};
+type DashboardDay = { day: string; answered: number; correct: number };
+type DashboardWeakArea = {
+  subObjectiveId: number;
+  subObjectiveCode: string;
+  title: string;
+  masteryScore: number;
+};
+type DashboardNextBest = {
+  subObjectiveId: number;
+  subObjectiveCode: string;
+  title: string;
+  rationale: string;
+} | null;
+type DashboardData = {
+  summary: DashboardSummary;
+  daily: DashboardDay[];
+  weakAreas: DashboardWeakArea[];
+  nextBest: DashboardNextBest;
+};
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
@@ -36,9 +69,18 @@ function App(): ReactElement {
   const [selectedDomainCode, setSelectedDomainCode] = useState<string>('');
   const [selectedObjectiveCode, setSelectedObjectiveCode] = useState<string>('');
   const [selectedSubObjectiveCode, setSelectedSubObjectiveCode] = useState<string>('');
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
+  const [quizMastery, setQuizMastery] = useState<number | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
 
   const t = messages[locale];
   const canShowContent = useMemo(() => !loading && !error, [loading, error]);
+  const currentSubObjective = useMemo(
+    () => subObjectives.find((item) => item.code === selectedSubObjectiveCode) ?? null,
+    [subObjectives, selectedSubObjectiveCode],
+  );
 
   async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${API_URL}${path}`, {
@@ -148,6 +190,23 @@ function App(): ReactElement {
       .finally(() => setLoading(false));
   }, [user, selectedSubObjectiveCode, locale]);
 
+  useEffect(() => {
+    setQuizQuestions([]);
+    setQuizIndex(0);
+    setQuizFeedback(null);
+    setQuizMastery(null);
+  }, [selectedSubObjectiveCode, locale]);
+
+  useEffect(() => {
+    if (!user) {
+      setDashboard(null);
+      return;
+    }
+    request<DashboardData>(`/api/progress/dashboard?lang=${locale}`)
+      .then((data) => setDashboard(data))
+      .catch(() => setDashboard(null));
+  }, [user, locale]);
+
   async function submitAuth(): Promise<void> {
     setAuthError(null);
     try {
@@ -177,6 +236,70 @@ function App(): ReactElement {
     setSelectedDomainCode('');
     setSelectedObjectiveCode('');
     setSelectedSubObjectiveCode('');
+    setQuizQuestions([]);
+    setQuizIndex(0);
+    setQuizFeedback(null);
+    setQuizMastery(null);
+  }
+
+  async function generateQuiz(): Promise<void> {
+    if (!currentSubObjective) {
+      return;
+    }
+    setQuizFeedback(null);
+    setLoading(true);
+    try {
+      await request<QuizQuestion[]>('/api/qcm/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subObjectiveId: currentSubObjective.id,
+          lang: locale,
+          difficulty: 2,
+          count: 5,
+        }),
+      });
+      const questions = await request<QuizQuestion[]>(
+        `/api/qcm/questions?subObjectiveId=${currentSubObjective.id}&lang=${locale}`,
+      );
+      setQuizQuestions(questions.slice(0, 5));
+      setQuizIndex(0);
+      setQuizMastery(null);
+    } catch {
+      setQuizFeedback(t.quizGenerationFailed);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function answerQuestion(choiceId: number): Promise<void> {
+    const question = quizQuestions[quizIndex];
+    if (!question) {
+      return;
+    }
+    try {
+      const result = await request<{ isCorrect: boolean; explanation: string; masteryScore: number }>(
+        '/api/qcm/answer',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId: question.id, choiceId }),
+        },
+      );
+      setQuizFeedback(
+        `${result.isCorrect ? t.correctAnswer : t.wrongAnswer} ${result.explanation}`,
+      );
+      setQuizMastery(result.masteryScore);
+      const freshDashboard = await request<DashboardData>(`/api/progress/dashboard?lang=${locale}`);
+      setDashboard(freshDashboard);
+    } catch {
+      setQuizFeedback(t.quizAnswerFailed);
+    }
+  }
+
+  function nextQuestion(): void {
+    setQuizFeedback(null);
+    setQuizIndex((value) => Math.min(value + 1, quizQuestions.length - 1));
   }
 
   if (!user) {
@@ -335,6 +458,77 @@ function App(): ReactElement {
         ) : null}
 
         {canShowContent ? (
+          <div className="dashboard-block">
+            <h3>{t.dashboardTitle}</h3>
+            {dashboard ? (
+              <>
+                <div className="dashboard-grid">
+                  <div className="metric-card">
+                    <p>{t.metricAnswered}</p>
+                    <strong>{dashboard.summary.answered}</strong>
+                  </div>
+                  <div className="metric-card">
+                    <p>{t.metricAccuracy}</p>
+                    <strong>{dashboard.summary.accuracy}%</strong>
+                  </div>
+                  <div className="metric-card">
+                    <p>{t.metricMastery}</p>
+                    <strong>{dashboard.summary.averageMastery}%</strong>
+                  </div>
+                  <div className="metric-card">
+                    <p>{t.metricStreak}</p>
+                    <strong>{dashboard.summary.streak}</strong>
+                  </div>
+                </div>
+
+                <div className="dashboard-two-cols">
+                  <div>
+                    <h4>{t.weakAreasTitle}</h4>
+                    {dashboard.weakAreas.length === 0 ? (
+                      <p>{t.noWeakAreas}</p>
+                    ) : (
+                      <ul>
+                        {dashboard.weakAreas.map((area) => (
+                          <li key={area.subObjectiveId}>
+                            {area.subObjectiveCode} - {area.title} ({area.masteryScore}%)
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h4>{t.nextBestTitle}</h4>
+                    {dashboard.nextBest ? (
+                      <p>
+                        <strong>
+                          {dashboard.nextBest.subObjectiveCode} - {dashboard.nextBest.title}
+                        </strong>{' '}
+                        {dashboard.nextBest.rationale}
+                      </p>
+                    ) : (
+                      <p>{t.noNextBest}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4>{t.dailyStatsTitle}</h4>
+                  <ul>
+                    {dashboard.daily.map((day) => (
+                      <li key={day.day}>
+                        {day.day}: {day.correct}/{day.answered}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <p>{t.dashboardUnavailable}</p>
+            )}
+          </div>
+        ) : null}
+
+        {canShowContent ? (
           <div className="topics">
             <h3>{t.topics}</h3>
             {topics.length === 0 ? (
@@ -348,6 +542,48 @@ function App(): ReactElement {
                 ))}
               </ul>
             )}
+          </div>
+        ) : null}
+
+        {canShowContent ? (
+          <div className="quiz-block">
+            <h3>{t.quizTitle}</h3>
+            <p>{t.quizHelp}</p>
+            <button type="button" className="btn active" onClick={() => void generateQuiz()}>
+              {t.generateQuiz}
+            </button>
+
+            {quizQuestions.length > 0 ? (
+              <div className="quiz-card">
+                <p className="quiz-step">
+                  {t.questionLabel} {quizIndex + 1}/{quizQuestions.length}
+                </p>
+                <p>{quizQuestions[quizIndex]?.questionText}</p>
+                <div className="quiz-choices">
+                  {quizQuestions[quizIndex]?.choices.map((choice) => (
+                    <button
+                      key={choice.id}
+                      type="button"
+                      className="btn"
+                      onClick={() => void answerQuestion(choice.id)}
+                    >
+                      {choice.choiceText}
+                    </button>
+                  ))}
+                </div>
+                {quizFeedback ? <p className="status">{quizFeedback}</p> : null}
+                {quizMastery !== null ? (
+                  <p className="status">
+                    {t.masteryLabel}: {quizMastery}%
+                  </p>
+                ) : null}
+                {quizIndex < quizQuestions.length - 1 ? (
+                  <button type="button" className="btn" onClick={nextQuestion}>
+                    {t.nextQuestion}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </section>

@@ -25,6 +25,15 @@ const env = {
     cookieSecure: process.env.COOKIE_SECURE === 'true',
     cookieSameSite: parseCookieSameSite(process.env.COOKIE_SAME_SITE),
   },
+  qcm: {
+    dailyGenerationLimit: Number(process.env.QCM_DAILY_GENERATION_LIMIT ?? 50),
+    generateRateWindowMs: Number(process.env.QCM_GENERATE_RATE_WINDOW_MS ?? 60000),
+    generateRateMax: Number(process.env.QCM_GENERATE_RATE_MAX ?? 10),
+  },
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY ?? '',
+    model: process.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+  },
   db: {
     host: process.env.DB_HOST ?? 'localhost',
     port: Number(process.env.DB_PORT ?? 5432),
