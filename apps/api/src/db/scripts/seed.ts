@@ -110,13 +110,11 @@ async function run(): Promise<void> {
   await sequelize.authenticate();
   await sequelize.sync();
   await seedCatalog();
-  // eslint-disable-next-line no-console
   console.log('Seed completed.');
   await sequelize.close();
 }
 
 run().catch((error: unknown) => {
-  // eslint-disable-next-line no-console
   console.error('Failed to seed database:', error);
   process.exit(1);
 });

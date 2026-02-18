@@ -10,13 +10,21 @@ type Domain = CatalogItem & { name: string };
 type Objective = CatalogItem & { title: string };
 type SubObjective = CatalogItem & { title: string };
 type Topic = CatalogItem & { name: string };
+type User = { id: number; email: string; displayName: string | null };
+type AuthMode = 'login' | 'register';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 function App(): ReactElement {
   const [locale, setLocale] = useState<Locale>('fr');
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
 
   const [exams, setExams] = useState<Exam[]>([]);
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -32,15 +40,36 @@ function App(): ReactElement {
   const t = messages[locale];
   const canShowContent = useMemo(() => !loading && !error, [loading, error]);
 
-  async function request<T>(path: string): Promise<T> {
-    const response = await fetch(`${API_URL}${path}`, { credentials: 'include' });
+  async function request<T>(path: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${API_URL}${path}`, {
+      credentials: 'include',
+      ...options,
+    });
     if (!response.ok) {
       throw new Error(`API error (${response.status})`);
+    }
+    if (response.status === 204) {
+      return undefined as T;
     }
     return (await response.json()) as T;
   }
 
   useEffect(() => {
+    request<{ user: User }>('/api/auth/me')
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setExams([]);
+      setDomains([]);
+      setObjectives([]);
+      setSubObjectives([]);
+      setTopics([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     request<Exam[]>('/api/catalog/exams')
@@ -50,11 +79,10 @@ function App(): ReactElement {
       })
       .catch(() => setError(t.apiUnavailable))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!selectedExamCode) {
+    if (!user || !selectedExamCode) {
       setDomains([]);
       return;
     }
@@ -67,11 +95,10 @@ function App(): ReactElement {
       })
       .catch(() => setError(t.apiUnavailable))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedExamCode, locale]);
+  }, [user, selectedExamCode, locale]);
 
   useEffect(() => {
-    if (!selectedDomainCode) {
+    if (!user || !selectedDomainCode) {
       setObjectives([]);
       return;
     }
@@ -86,11 +113,10 @@ function App(): ReactElement {
       })
       .catch(() => setError(t.apiUnavailable))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDomainCode, locale]);
+  }, [user, selectedDomainCode, locale]);
 
   useEffect(() => {
-    if (!selectedObjectiveCode) {
+    if (!user || !selectedObjectiveCode) {
       setSubObjectives([]);
       return;
     }
@@ -105,11 +131,10 @@ function App(): ReactElement {
       })
       .catch(() => setError(t.apiUnavailable))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedObjectiveCode, locale]);
+  }, [user, selectedObjectiveCode, locale]);
 
   useEffect(() => {
-    if (!selectedSubObjectiveCode) {
+    if (!user || !selectedSubObjectiveCode) {
       setTopics([]);
       return;
     }
@@ -121,8 +146,102 @@ function App(): ReactElement {
       .then((data) => setTopics(data))
       .catch(() => setError(t.apiUnavailable))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSubObjectiveCode, locale]);
+  }, [user, selectedSubObjectiveCode, locale]);
+
+  async function submitAuth(): Promise<void> {
+    setAuthError(null);
+    try {
+      const payload = authMode === 'register' ? { email, password, displayName } : { email, password };
+      const data = await request<{ user: User }>(
+        authMode === 'register' ? '/api/auth/register' : '/api/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      );
+      setUser(data.user);
+      setPassword('');
+    } catch {
+      setAuthError(authMode === 'register' ? t.registerFailed : t.loginFailed);
+    }
+  }
+
+  async function handleLogout(): Promise<void> {
+    await request<void>('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    setUser(null);
+    setEmail('');
+    setPassword('');
+    setDisplayName('');
+    setSelectedExamCode('');
+    setSelectedDomainCode('');
+    setSelectedObjectiveCode('');
+    setSelectedSubObjectiveCode('');
+  }
+
+  if (!user) {
+    return (
+      <main className="container">
+        <header className="header">
+          <h1>{t.title}</h1>
+          <p>{t.subtitle}</p>
+        </header>
+
+        <section className="card">
+          <h2>{t.authTitle}</h2>
+          <p>{t.authSubtitle}</p>
+          <div className="actions">
+            <button
+              type="button"
+              className={authMode === 'login' ? 'btn active' : 'btn'}
+              onClick={() => setAuthMode('login')}
+            >
+              {t.login}
+            </button>
+            <button
+              type="button"
+              className={authMode === 'register' ? 'btn active' : 'btn'}
+              onClick={() => setAuthMode('register')}
+            >
+              {t.register}
+            </button>
+          </div>
+
+          <div className="form-grid">
+            {authMode === 'register' ? (
+              <label>
+                {t.displayName}
+                <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+              </label>
+            ) : null}
+            <label>
+              Email
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </label>
+            <label>
+              {t.password}
+              <input
+                type="password"
+                autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+            <button type="button" className="btn active" onClick={() => void submitAuth()}>
+              {authMode === 'register' ? t.createAccount : t.signIn}
+            </button>
+          </div>
+
+          {authError ? <p className="status error">{authError}</p> : null}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="container">
@@ -132,6 +251,15 @@ function App(): ReactElement {
       </header>
 
       <section className="card">
+        <div className="userbar">
+          <p>
+            {t.connectedAs}: <strong>{user.displayName || user.email}</strong>
+          </p>
+          <button type="button" className="btn" onClick={() => void handleLogout()}>
+            {t.logout}
+          </button>
+        </div>
+
         <h2>{t.catalogExplorer}</h2>
         <p>{t.catalogHelper}</p>
 

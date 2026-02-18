@@ -12,13 +12,11 @@ async function bootstrap(): Promise<void> {
   await sequelize.sync();
 
   app.listen(env.port, () => {
-    // eslint-disable-next-line no-console
     console.log(`API listening on http://localhost:${env.port}`);
   });
 }
 
 bootstrap().catch((error: unknown) => {
-  // eslint-disable-next-line no-console
   console.error('Failed to start API:', error);
   process.exit(1);
 });

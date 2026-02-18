@@ -61,7 +61,14 @@ npm run db:seed -w @comptia/api
 - `GET /api/catalog/sub-objectives?objectiveCode=1.1&lang=fr`
 - `GET /api/catalog/topics?subObjectiveCode=1.1.1&lang=fr`
 
+## Endpoints disponibles (auth cookie httpOnly)
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
 ## Prochaines phases
 
-- Phase 2: auth cookie httpOnly
-- Phase 3: UI catalogue mobile-first connectee a l'API
+- Phase 3: UI catalogue mobile-first plus ergonomie (cards, nav mobile, ecrans dedies)
+- Phase 4: moteur QCM (questions, choices, answer, user_answers, user_mastery)
